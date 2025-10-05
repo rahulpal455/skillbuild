@@ -1,0 +1,320 @@
+<!doctype html>
+<!--
+SkillGapFiller - Single-file frontend (HTML/CSS/JS)
+Created for: Rahul Pal
+Notes:
+- Plain HTML + Tailwind CDN (no React) as requested.
+- Contains: landing, interactive skill assessment, mock AI roadmap generator (client-side simulation), course suggestions, export roadmap JSON, and basic styling.
+- Replace mock logic with real AI/backend: see "Integration Notes" at the bottom.
+
+How to use:
+1. Save this file as index.html and open in a browser.
+2. To connect a backend or an AI API (OpenAI, etc.), send the assessment data to your server and return personalized roadmap content.
+
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SkillGapFiller — Personalized Learning Co‑Pilot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Small custom styles */
+    .glass { background: rgba(255,255,255,0.6); backdrop-filter: blur(6px); }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-sky-50 to-indigo-50 min-h-screen text-gray-800">
+  <header class="max-w-6xl mx-auto p-6 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">SG</div>
+      <div>
+        <h1 class="text-xl font-semibold">SkillGapFiller</h1>
+        <p class="text-sm text-gray-600">AI-powered personalized learning co‑pilot</p>
+      </div>
+    </div>
+    <nav class="space-x-4 text-sm">
+      <a href="#features" class="hover:underline">Features</a>
+      <a href="#assessment" class="hover:underline">Assessment</a>
+      <a href="#roadmap" class="hover:underline">Roadmap</a>
+      <button id="demoLogin" class="ml-2 px-3 py-1 rounded bg-indigo-600 text-white text-sm">Demo</button>
+    </nav>
+  </header>
+
+  <main class="max-w-6xl mx-auto p-6">
+    <!-- Hero -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center my-8">
+      <div>
+        <h2 class="text-3xl font-extrabold leading-tight">Close your skill gaps — fast. Personalized learning plans made for the job you want.</h2>
+        <p class="mt-4 text-gray-700">From assessment to a step-by-step learning roadmap, SkillGapFiller tailors courses, mini-projects and timelines to your current skills and target role.</p>
+        <div class="mt-6 flex gap-3">
+          <a href="#assessment" class="px-4 py-2 bg-indigo-600 text-white rounded shadow">Start assessment</a>
+          <a href="#features" class="px-4 py-2 border rounded">Learn more</a>
+        </div>
+        <ul class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+          <li>✔ Personalized roadmaps</li>
+          <li>✔ Skill-level diagnosis</li>
+          <li>✔ Curated courses & projects</li>
+          <li>✔ Timeline & milestones</li>
+        </ul>
+      </div>
+      <div class="glass p-6 rounded-2xl shadow">
+        <h3 class="text-lg font-semibold">Quick demo — generate a mini roadmap</h3>
+        <p class="text-sm text-gray-600 mt-1">Type your current skills and your target job. The site will simulate a personalized plan.</p>
+        <div class="mt-4">
+          <label class="text-sm">Current skills (comma separated)</label>
+          <input id="demoSkills" class="w-full mt-2 p-2 rounded border" placeholder="e.g. Python, SQL, HTML" />
+          <label class="text-sm mt-3">Target role</label>
+          <input id="demoTarget" class="w-full mt-2 p-2 rounded border" placeholder="e.g. Data Engineer" />
+          <div class="flex gap-2 mt-4">
+            <button id="demoGen" class="px-3 py-2 bg-indigo-600 text-white rounded">Generate</button>
+            <button id="demoClear" class="px-3 py-2 border rounded">Clear</button>
+          </div>
+          <pre id="demoOut" class="mt-4 text-sm bg-white p-3 rounded border max-h-40 overflow-auto"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="my-12">
+      <h3 class="text-2xl font-bold">How it works</h3>
+      <div class="grid md:grid-cols-3 gap-6 mt-6">
+        <div class="p-4 bg-white rounded-lg shadow">
+          <h4 class="font-semibold">1) Assess</h4>
+          <p class="text-sm text-gray-600 mt-2">Adaptive skill questionnaire + resume / project parse to pinpoint strengths and gaps.</p>
+        </div>
+        <div class="p-4 bg-white rounded-lg shadow">
+          <h4 class="font-semibold">2) Map</h4>
+          <p class="text-sm text-gray-600 mt-2">Map gaps to micro-skills, curated courses and hands-on projects — with estimated time.</p>
+        </div>
+        <div class="p-4 bg-white rounded-lg shadow">
+          <h4 class="font-semibold">3) Coach</h4>
+          <p class="text-sm text-gray-600 mt-2">Ongoing check-ins, revision of roadmap, and interview prep tailored to milestones.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Assessment -->
+    <section id="assessment" class="my-12">
+      <h3 class="text-2xl font-bold">Skill Assessment</h3>
+      <div class="mt-4 grid md:grid-cols-2 gap-6">
+        <form id="assessmentForm" class="p-6 bg-white rounded-lg shadow">
+          <label class="block text-sm">Full name</label>
+          <input id="name" class="w-full mt-2 p-2 rounded border" required />
+
+          <label class="block text-sm mt-3">Email</label>
+          <input id="email" class="w-full mt-2 p-2 rounded border" type="email" required />
+
+          <label class="block text-sm mt-3">Current skills (comma separated)</label>
+          <input id="skills" class="w-full mt-2 p-2 rounded border" placeholder="e.g. Java, Git, DBMS" />
+
+          <label class="block text-sm mt-3">Target job</label>
+          <input id="target" class="w-full mt-2 p-2 rounded border" placeholder="e.g. Full-stack Developer" />
+
+          <label class="block text-sm mt-3">Weeks available per week to learn</label>
+          <input id="hoursPerWeek" class="w-full mt-2 p-2 rounded border" placeholder="e.g. 10" />
+
+          <div class="mt-4 flex gap-2">
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Generate Roadmap</button>
+            <button id="saveProfile" type="button" class="px-4 py-2 border rounded">Save Profile (local)</button>
+          </div>
+        </form>
+
+        <div class="p-6 bg-white rounded-lg shadow">
+          <h4 class="font-semibold">Roadmap preview</h4>
+          <div id="roadmapPreview" class="mt-3 text-sm text-gray-700 min-h-[200px]"></div>
+          <div class="mt-4 flex gap-2">
+            <button id="downloadRoadmap" class="px-3 py-2 bg-green-600 text-white rounded">Download JSON</button>
+            <button id="emailRoadmap" class="px-3 py-2 border rounded">(Mock) Email me</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap details -->
+    <section id="roadmap" class="my-12">
+      <h3 class="text-2xl font-bold">Example roadmap</h3>
+      <div id="roadmapCards" class="mt-4 grid md:grid-cols-3 gap-4"></div>
+    </section>
+
+    <footer class="mt-12 text-center text-sm text-gray-600 pb-12">Built with ❤️ — Replace mock logic with a backend & AI model for production.</footer>
+  </main>
+
+  <script>
+    // --- Mock knowledge base and mapping rules ---
+    const ROLE_SKILL_MAP = {
+      'Data Engineer': ['Python','SQL','ETL','Data Modeling','Cloud (AWS/GCP)'],
+      'Data Scientist': ['Python','Statistics','ML','Data Viz','SQL'],
+      'Full-stack Developer': ['HTML','CSS','JavaScript','Node.js','Databases'],
+      'DevOps Engineer': ['Linux','Docker','Kubernetes','CI/CD','Cloud (AWS/GCP)'],
+      'Machine Learning Engineer': ['Python','ML','Deep Learning','TensorFlow/PyTorch','Data Pipelines']
+    };
+
+    const COURSE_DB = [
+      {id:1, title:'Intro to Python', timeWeeks:2, skills:['Python']},
+      {id:2, title:'SQL for Data Work', timeWeeks:2, skills:['SQL']},
+      {id:3, title:'ETL Fundamentals', timeWeeks:3, skills:['ETL']},
+      {id:4, title:'Cloud Essentials (AWS)', timeWeeks:3, skills:['Cloud (AWS/GCP)']},
+      {id:5, title:'Frontend Basics (HTML/CSS/JS)', timeWeeks:4, skills:['HTML','CSS','JavaScript']},
+      {id:6, title:'Node.js & REST APIs', timeWeeks:3, skills:['Node.js']},
+      {id:7, title:'Docker & Containers', timeWeeks:2, skills:['Docker']},
+      {id:8, title:'Intro to ML', timeWeeks:4, skills:['ML']},
+      {id:9, title:'Deep Learning Foundations', timeWeeks:4, skills:['Deep Learning']}
+    ];
+
+    // --- Utility functions ---
+    function normalizeList(str){
+      if(!str) return [];
+      return str.split(',').map(s=>s.trim()).filter(Boolean);
+    }
+
+    function unique(a){ return Array.from(new Set(a)); }
+
+    function computeGap(currentSkills, role){
+      const desired = ROLE_SKILL_MAP[role] || [];
+      const missing = desired.filter(s => !currentSkills.some(c=> c.toLowerCase() === s.toLowerCase()));
+      return { desired, missing };
+    }
+
+    function pickCoursesForSkills(missingSkills){
+      const picks = [];
+      missingSkills.forEach(ms=>{
+        const c = COURSE_DB.find(course => course.skills.some(s=> s.toLowerCase()===ms.toLowerCase()));
+        if(c) picks.push(c);
+      });
+      return picks;
+    }
+
+    function estimateTimeline(courses, hoursPerWeek){
+      // Simple estimate: weeks = sum(course.timeWeeks) * (10 / hoursPerWeek)
+      const base = courses.reduce((s,c)=>s+c.timeWeeks,0) || 0;
+      const scale = Math.max(1, 10 / Math.max(1, Number(hoursPerWeek||10)));
+      return Math.ceil(base * scale);
+    }
+
+    function generateRoadmap(profile){
+      const current = normalizeList(profile.skills);
+      const { desired, missing } = computeGap(current, profile.target);
+      const recommendedCourses = pickCoursesForSkills(missing);
+      const timelineWeeks = estimateTimeline(recommendedCourses, profile.hoursPerWeek);
+
+      const phases = [];
+      if(recommendedCourses.length===0){
+        phases.push({title:'Polish and Projects', desc:'You already have most core skills. Build 2-3 projects and prepare interview tasks.'});
+      } else {
+        recommendedCourses.forEach((c,i)=>{
+          phases.push({title:`${c.title}`, desc:`Focus on ${c.skills.join(', ')} — estimated ${c.timeWeeks} week(s)`});
+        });
+        phases.push({title:'Capstone Project', desc:'Build a small project that ties skills together.'});
+      }
+
+      return {
+        name:profile.name, email:profile.email, target:profile.target,
+        currentSkills:current, missingSkills:missing, recommendedCourses, timelineWeeks, phases
+      };
+    }
+
+    // --- DOM wiring ---
+    document.getElementById('demoGen').addEventListener('click', ()=>{
+      const skills = document.getElementById('demoSkills').value;
+      const target = document.getElementById('demoTarget').value || 'Data Engineer';
+      const profile = {name:'Demo User', email:'demo@example.com', skills, target, hoursPerWeek:8};
+      const rd = generateRoadmap(profile);
+      document.getElementById('demoOut').textContent = JSON.stringify(rd, null, 2);
+      renderRoadmapCards(rd);
+    });
+
+    document.getElementById('demoClear').addEventListener('click', ()=>{
+      document.getElementById('demoSkills').value='';
+      document.getElementById('demoTarget').value='';
+      document.getElementById('demoOut').textContent='';
+    });
+
+    document.getElementById('assessmentForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const profile = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        skills: document.getElementById('skills').value,
+        target: document.getElementById('target').value || 'Data Engineer',
+        hoursPerWeek: Number(document.getElementById('hoursPerWeek').value || 8)
+      };
+      const roadmap = generateRoadmap(profile);
+      localStorage.setItem('sg_profile', JSON.stringify(profile));
+      localStorage.setItem('sg_roadmap', JSON.stringify(roadmap));
+      showRoadmapPreview(roadmap);
+      renderRoadmapCards(roadmap);
+    });
+
+    document.getElementById('saveProfile').addEventListener('click', ()=>{
+      const profile = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        skills: document.getElementById('skills').value,
+        target: document.getElementById('target').value || 'Data Engineer',
+        hoursPerWeek: Number(document.getElementById('hoursPerWeek').value || 8)
+      };
+      localStorage.setItem('sg_profile', JSON.stringify(profile));
+      alert('Profile saved locally. In production, send this to your backend.');
+    });
+
+    document.getElementById('downloadRoadmap').addEventListener('click', ()=>{
+      const roadmap = JSON.parse(localStorage.getItem('sg_roadmap') || '{}');
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(roadmap, null, 2));
+      const a = document.createElement('a');
+      a.href = dataStr; a.download = 'roadmap.json'; document.body.appendChild(a); a.click(); a.remove();
+    });
+
+    document.getElementById('emailRoadmap').addEventListener('click', ()=>{
+      alert('This is a mock. Wire a backend API to send the roadmap by email.');
+    });
+
+    document.getElementById('demoLogin').addEventListener('click', ()=>{
+      // simple demo profile load
+      document.getElementById('name').value='Rahul Pal';
+      document.getElementById('email').value='rahul@example.com';
+      document.getElementById('skills').value='Python, SQL';
+      document.getElementById('target').value='Data Engineer';
+      document.getElementById('hoursPerWeek').value='10';
+      alert('Demo profile loaded. Click Generate Roadmap.');
+    });
+
+    function showRoadmapPreview(rd){
+      const el = document.getElementById('roadmapPreview');
+      if(!rd || !rd.name) { el.innerHTML = '<p class="text-gray-500">No roadmap generated yet.</p>'; return; }
+      el.innerHTML = `
+        <p><strong>${rd.name}</strong> — Target: ${rd.target}</p>
+        <p class="mt-2">Missing skills: ${rd.missingSkills.join(', ') || 'None'}</p>
+        <p class="mt-1">Estimated timeline: ${rd.timelineWeeks} week(s)</p>
+        <ol class="mt-2 list-decimal pl-5 text-sm">
+          ${rd.phases.map(p=> `<li><strong>${p.title}:</strong> ${p.desc}</li>`).join('')}
+        </ol>
+      `;
+    }
+
+    function renderRoadmapCards(rd){
+      const container = document.getElementById('roadmapCards');
+      container.innerHTML = '';
+      if(!rd || !rd.name) return;
+      rd.phases.forEach((p,i)=>{
+        const card = document.createElement('div');
+        card.className = 'p-4 bg-white rounded-lg shadow';
+        card.innerHTML = `<h4 class="font-semibold">Phase ${i+1}: ${p.title}</h4><p class="text-sm text-gray-600 mt-2">${p.desc}</p>`;
+        container.appendChild(card);
+      });
+    }
+
+    // Load stored roadmap on startup
+    window.addEventListener('load', ()=>{
+      const rd = JSON.parse(localStorage.getItem('sg_roadmap') || 'null');
+      if(rd){ showRoadmapPreview(rd); renderRoadmapCards(rd); }
+      else document.getElementById('roadmapPreview').innerHTML = '<p class="text-gray-500">No roadmap generated yet. Fill the form and generate one.</p>';
+    });
+
+    // Integration notes (visible in source):
+    // - Replace ROLE_SKILL_MAP & COURSE_DB with remote DB or AI-backed knowledge graph.
+    // - On submit, POST profile to /api/generate-roadmap; backend calls LLM or custom model to create roadmap.
+    // - For resume parsing, accept file upload and use server-side parser.
+
+  </script>
+</body>
+</html>
